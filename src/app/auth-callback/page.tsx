@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { trpc } from '@/app/_trpc/client'
+import { Icon } from '@/components/icon'
 
 export default function AuthCallback() {
   const searchParams = useSearchParams()
@@ -12,7 +13,7 @@ export default function AuthCallback() {
 
   const origin = searchParams.get('origin')
 
-  const { data, status } = trpc.authCallback.useQuery(undefined, {
+  const { data, status, error } = trpc.authCallback.useQuery(undefined, {
     retry: true,
     retryDelay: 500,
   })
@@ -21,10 +22,18 @@ export default function AuthCallback() {
     if (status === 'success' && data?.success) {
       // user is synced to db
       router.push(origin ? `/${origin}` : '/dashboard')
-    } else if (status === 'error') {
+    } else if (error?.data?.code === 'UNAUTHORIZED') {
       router.push('/sign-in')
     }
-  }, [data?.success, origin, router, status])
+  }, [data?.success, error?.data?.code, origin, router, status])
 
-  return <main>AUthCallback</main>
+  return (
+    <main className="mt-24 flex w-full justify-center">
+      <div className="flex flex-col items-center gap-2">
+        <Icon icon="Loader" className="h-8 animate-spin text-zinc-800" />
+        <h3 className="text-xl font-semibold">Setting up your account...</h3>
+        <p>You will be redirected automatically.</p>
+      </div>
+    </main>
+  )
 }

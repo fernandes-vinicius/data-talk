@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { Navbar } from '@/components/navbar'
+import { Providers } from '@/components/providers'
 import { fontSans } from '@/config/fonts'
 
 import './globals.css'
@@ -16,8 +17,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={fontSans.className}>
-        <Navbar />
-        {children}
+        <Providers>
+          <Navbar />
+          {children}
+        </Providers>
       </body>
     </html>
   )
