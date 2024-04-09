@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { db } from '@/db'
 import { getUserFromSession } from '@/lib/auth'
 
+import { DashboardComponent } from './_components/dashboard-component'
+
 // '/api/auth/login?post_login_redirect_url=/dashboard'
 const redirectUrl = '/auth-callback?origin=dashboard'
 
@@ -23,5 +25,9 @@ export default async function Dashboard() {
     redirect(redirectUrl)
   }
 
-  return <main>Dashboard: {user?.given_name}</main>
+  return (
+    <main>
+      <DashboardComponent />
+    </main>
+  )
 }
