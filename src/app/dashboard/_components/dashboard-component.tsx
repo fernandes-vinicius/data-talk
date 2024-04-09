@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 import { format } from 'date-fns'
 import Link from 'next/link'
 
@@ -11,16 +13,30 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { UploadButton } from './upload-button'
 
 export function DashboardComponent() {
+  const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState('')
+
+  const utils = trpc.useUtils()
+
   const { data: files, isLoading } = trpc.getUserFiles.useQuery()
 
-  const { mutate: deleteFile } = trpc.deleteFile.useMutation()
+  const { mutate: deleteFile } = trpc.deleteFile.useMutation({
+    onSuccess: () => {
+      utils.getUserFiles.invalidate()
+    },
+    onMutate: ({ id }) => {
+      setCurrentlyDeletingFile(id)
+    },
+    onSettled: () => {
+      setCurrentlyDeletingFile('')
+    },
+  })
 
   const sortedFiles = files?.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   )
 
   return (
-    <div className="mx-auto max-w-7xl md:p-10">
+    <div className="mx-auto max-w-7xl p-6 md:p-10">
       <div className="mt-8 flex flex-col items-start justify-between gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:gap-0">
         <h1 className="mb-3 text-5xl font-bold text-gray-900">My Files</h1>
         <UploadButton />
@@ -81,9 +97,15 @@ export function DashboardComponent() {
                   size="sm"
                   variant="destructive"
                   className="w-full"
-                  // onClick={() => deleteFile({ id: file.id })}
+                  disabled={currentlyDeletingFile === file.id}
+                  onClick={() => deleteFile({ id: file.id })}
                 >
-                  <Icon icon="Trash" className="size-4" />
+                  {currentlyDeletingFile === file.id && (
+                    <Icon icon="Loader" className="size-4 animate-spin" />
+                  )}
+                  {currentlyDeletingFile !== file.id && (
+                    <Icon icon="Trash" className="size-4" />
+                  )}
                 </Button>
               </div>
             </li>
