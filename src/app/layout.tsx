@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { Navbar } from '@/components/navbar'
 import { Providers } from '@/components/providers'
+import { Toaster } from '@/components/ui/sonner'
 import { fontSans } from '@/config/fonts'
 
 import './globals.css'
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <Providers>
           <Navbar />
           {children}
+          <Toaster />
         </Providers>
       </body>
     </html>

@@ -2,8 +2,12 @@
 
 import { useCallback, useState } from 'react'
 
+import { useRouter } from 'next/navigation'
 import { useDropzone } from 'react-dropzone'
+import { toast } from 'sonner'
+import { green } from 'tailwindcss/colors'
 
+import { trpc } from '@/app/_trpc/client'
 import { Icon } from '@/components/icon'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
@@ -11,10 +15,20 @@ import { Progress } from '@/components/ui/progress'
 import { useUploadThing } from '@/lib/uploadthing'
 
 const UploadDropzone = () => {
+  const router = useRouter()
+
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
   const { startUpload } = useUploadThing('pdfUploader')
+
+  const { mutate: startPolling } = trpc.getFile.useMutation({
+    onSuccess: (file) => {
+      router.push(`/dashboard/${file.id}`)
+    },
+    retry: true,
+    retryDelay: 500,
+  })
 
   function startSimulatedProgress() {
     setUploadProgress(0)
@@ -33,7 +47,7 @@ const UploadDropzone = () => {
   }
 
   const onDrop = useCallback(
-    async (acceptedFiles: never) => {
+    async (acceptedFiles: File[]) => {
       setIsUploading(true)
 
       const progressInterval = startSimulatedProgress()
@@ -42,15 +56,29 @@ const UploadDropzone = () => {
       const res = await startUpload(acceptedFiles)
 
       if (!res) {
-        // TODO - Toast error
-        console.log('Upload failed')
+        toast.error('Something went wrong', {
+          description: 'Please try again later',
+        })
+        return
+      }
+
+      const [fileResponse] = res
+
+      const key = fileResponse?.key
+
+      if (!key) {
+        toast.error('Something went wrong', {
+          description: 'Please try again later',
+        })
+        return
       }
 
       clearInterval(progressInterval)
-      // setUploadProgress(100)
-      setIsUploading(false)
+      setUploadProgress(100)
+
+      startPolling({ key })
     },
-    [startUpload],
+    [startPolling, startUpload],
   )
 
   const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
@@ -92,9 +120,16 @@ const UploadDropzone = () => {
           {isUploading && (
             <div className="mx-auto mt-4 w-full max-w-xs">
               <Progress
+                indicatorColor={uploadProgress === 100 ? green[500] : ''}
                 value={uploadProgress}
                 className="h-1 w-full bg-zinc-200"
               />
+              {uploadProgress === 100 ? (
+                <div className="flex items-center justify-center gap-1 pt-2 text-center text-sm text-zinc-700">
+                  <Icon icon="Loader" className="size-3 animate-spin" />
+                  Redirecting...
+                </div>
+              ) : null}
             </div>
           )}
         </label>
