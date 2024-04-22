@@ -8,10 +8,13 @@ import { Icon } from '@/components/icon'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
+import { useUploadThing } from '@/lib/uploadthing'
 
 const UploadDropzone = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+
+  const { startUpload } = useUploadThing('pdfUploader')
 
   function startSimulatedProgress() {
     setUploadProgress(0)
@@ -29,18 +32,26 @@ const UploadDropzone = () => {
     return interval
   }
 
-  const onDrop = useCallback(async () => {
-    setIsUploading(true)
+  const onDrop = useCallback(
+    async (acceptedFiles: never) => {
+      setIsUploading(true)
 
-    const progressInterval = startSimulatedProgress()
+      const progressInterval = startSimulatedProgress()
 
-    // handle file uploading
-    // await new Promise((resolve) => setTimeout(resolve, 15000))
+      // handle file uploading
+      const res = await startUpload(acceptedFiles)
 
-    clearInterval(progressInterval)
-    setUploadProgress(100)
-    // setIsUploading(false)
-  }, [])
+      if (!res) {
+        // TODO - Toast error
+        console.log('Upload failed')
+      }
+
+      clearInterval(progressInterval)
+      // setUploadProgress(100)
+      setIsUploading(false)
+    },
+    [startUpload],
+  )
 
   const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
     onDrop,
