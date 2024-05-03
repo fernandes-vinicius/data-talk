@@ -1,6 +1,6 @@
 'use client'
 
-import { PDFRenderer as ReactPDFRenderer } from '@react-pdf/renderer'
+// import { PDFRenderer as ReactPDFRenderer } from '@react-pdf/renderer'
 
 export function PDFRenderer() {
   return (
